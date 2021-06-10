@@ -118,8 +118,8 @@ local Menu5 = {
 
         'Fusil à Pompe',
         'Fusil à Canon Scié',
-        'Fusil à Pompe d\'Assault', 
-        'Fusil à Pompe Bullup',        
+        'Fusil à Pompe d\'Assault',
+        'Fusil à Pompe Bullup',
         'Mousquet',
         'Fusil à Pompe Lourd',
         'Fusil à Double Canon',
@@ -139,7 +139,7 @@ local Menu6 = {
         'Batte de Baseball',
         'Cran d\'Arrêt ',
         'Machette',
-        'Poing Americain',     
+        'Poing Americain',
         'Matraque',
         'Lampe de Poche',
         'Pied de Biche',
@@ -339,15 +339,26 @@ function aTenue()
 end
 
 
+function DrawPlayerInfo(target)
+    drawTarget = target
+    drawInfo = true
+end
+
+function StopDrawPlayerInfo()
+    drawInfo = false
+    drawTarget = 0
+end
+
 Citizen.CreateThread( function()
     while true do
         Citizen.Wait(0)
         if drawInfo then
             local text = {}
+            -- cheat checks
             local targetPed = GetPlayerPed(drawTarget)
-            
+
             table.insert(text,"E pour stop spectate")
-            
+
             for i,theText in pairs(text) do
                 SetTextFont(0)
                 SetTextProportional(1)
@@ -360,21 +371,45 @@ Citizen.CreateThread( function()
                 AddTextComponentString(theText)
                 EndTextCommandDisplayText(0.3, 0.7+(i/30))
             end
-            
+
             if IsControlJustPressed(0,103) then
                 local targetPed = PlayerPedId()
                 local targetx,targety,targetz = table.unpack(GetEntityCoords(targetPed, false))
-    
+
                 RequestCollisionAtCoord(targetx,targety,targetz)
                 NetworkSetInSpectatorMode(false, targetPed)
-    
+
                 StopDrawPlayerInfo()
-                
+
             end
-            
+
         end
     end
 end)
+
+function SpectatePlayer(targetPed,target,name)
+    local playerPed = PlayerPedId() -- yourself
+    enable = true
+    if targetPed == playerPed then enable = false end
+
+    if(enable)then
+
+        local targetx,targety,targetz = table.unpack(GetEntityCoords(targetPed, false))
+
+        RequestCollisionAtCoord(targetx,targety,targetz)
+        NetworkSetInSpectatorMode(true, targetPed)
+        DrawPlayerInfo(target)
+        ESX.ShowNotification('~g~Mode spectateur en cours')
+    else
+
+        local targetx,targety,targetz = table.unpack(GetEntityCoords(targetPed, false))
+
+        RequestCollisionAtCoord(targetx,targety,targetz)
+        NetworkSetInSpectatorMode(false, targetPed)
+        StopDrawPlayerInfo()
+        ESX.ShowNotification('~b~Mode spectateur arrêtée')
+    end
+end
 
 local hasCinematic = true
 function openCinematique()
@@ -414,10 +449,10 @@ end)
 
 
 Citizen.CreateThread(function()
-	
+
 	while true do
 		Citizen.Wait(4000)
-		
+
 		TriggerEvent('esx_status:getStatus', 'hunger', function(status)
 			VM.Faim = status.val/1000000*100
 
@@ -426,7 +461,7 @@ Citizen.CreateThread(function()
 			VM.Soif = status.val/1000000*100
 
 		end)
-		
+
 	end
 
 end)
@@ -486,11 +521,11 @@ function no_clip()
     if noclip then
       SetEntityInvincible(ped, true)
       SetEntityVisible(ped, false, false)
-      ESX.ShowAdvancedNotification("Administration", "", "NoClip : ~g~activé", "CHAR_STRETCH", 1) 
-    else 
+      ESX.ShowAdvancedNotification("Administration", "", "NoClip : ~g~activé", "CHAR_STRETCH", 1)
+    else
       SetEntityInvincible(ped, false)
       SetEntityVisible(ped, true, false)
-      ESX.ShowAdvancedNotification("Administration", "", "NoClip : ~r~désactivé", "CHAR_STRETCH", 1) 
+      ESX.ShowAdvancedNotification("Administration", "", "NoClip : ~r~désactivé", "CHAR_STRETCH", 1)
     end
   end
 
@@ -550,30 +585,30 @@ end
 		return nil
 	end
 end
-  
+
   function getPosition()
     local x,y,z = table.unpack(GetEntityCoords(GetPlayerPed(-1),true))
     return x,y,z
   end
-  
+
   function getCamDirection()
     local heading = GetGameplayCamRelativeHeading()+GetEntityHeading(GetPlayerPed(-1))
     local pitch = GetGameplayCamRelativePitch()
-  
+
     local x = -math.sin(heading*math.pi/180.0)
     local y = math.cos(heading*math.pi/180.0)
     local z = math.sin(pitch*math.pi/180.0)
-  
+
     local len = math.sqrt(x*x+y*y+z*z)
     if len ~= 0 then
       x = x/len
       y = y/len
       z = z/len
     end
-  
+
     return x,y,z
   end
-  
+
   function isNoclip()
     return noclip
   end
@@ -615,15 +650,15 @@ end)
 
 
 function admin_tp_marker()
-    
+
     local playerPed = GetPlayerPed(-1)
     local WaypointHandle = GetFirstBlipInfoId(8)
     if DoesBlipExist(WaypointHandle) then
         local coord = Citizen.InvokeNative(0xFA7C7F0AADF25D09, WaypointHandle, Citizen.ResultAsVector())
         SetEntityCoordsNoOffset(playerPed, coord.x, coord.y, -199.5, false, false, false, true)
-  ESX.ShowAdvancedNotification("Administration", "", "TP sur Marqueur : ~g~Réussi !", "CHAR_STRETCH", 1)                 
+  ESX.ShowAdvancedNotification("Administration", "", "TP sur Marqueur : ~g~Réussi !", "CHAR_STRETCH", 1)
     else
-  ESX.ShowAdvancedNotification("Administration", "", "~r~Aucun Marqueur !", "CHAR_STRETCH", 1)                  
+  ESX.ShowAdvancedNotification("Administration", "", "~r~Aucun Marqueur !", "CHAR_STRETCH", 1)
     end
 end
 
@@ -632,7 +667,7 @@ end
 
     if amount ~= nil then
         amount = tonumber(amount)
-        
+
         if type(amount) == 'number' then
             TriggerServerEvent('Administration:GiveCash', amount)
         end
@@ -645,7 +680,7 @@ function GiveBanque()
 
     if amount ~= nil then
         amount = tonumber(amount)
-        
+
         if type(amount) == 'number' then
             TriggerServerEvent('Administration:GiveBanque', amount)
         end
@@ -658,7 +693,7 @@ function GiveND()
 
     if amount ~= nil then
         amount = tonumber(amount)
-        
+
         if type(amount) == 'number' then
             TriggerServerEvent('Administration:GiveND', amount)
         end
@@ -675,13 +710,13 @@ end
 function admin_mode_fantome()
     invisible = not invisible
     local ped = GetPlayerPed(-1)
-    
-    if invisible then 
+
+    if invisible then
           SetEntityVisible(ped, false, false)
-          ESX.ShowAdvancedNotification("Administration", "", "Invisibilité : ~g~activé", "CHAR_STRETCH", 1) 
+          ESX.ShowAdvancedNotification("Administration", "", "Invisibilité : ~g~activé", "CHAR_STRETCH", 1)
       else
           SetEntityVisible(ped, true, false)
-          ESX.ShowAdvancedNotification("Administration", "", "Invisibilité : ~r~désactivé", "CHAR_STRETCH", 1) 
+          ESX.ShowAdvancedNotification("Administration", "", "Invisibilité : ~r~désactivé", "CHAR_STRETCH", 1)
     end
   end
 
@@ -697,10 +732,10 @@ function admin_mode_fantome()
     end
     local playerCoords = GetEntityCoords(GetPlayerPed(-1))
     playerCoords = playerCoords + vector3(0, 2, 0)
-    
+
     SetEntityCoords(carTargetDep, playerCoords)
-    
-    ESX.ShowAdvancedNotification("Administration", "", "~g~Véhicule retourné", "CHAR_STRETCH", 1) 
+
+    ESX.ShowAdvancedNotification("Administration", "", "~g~Véhicule retourné", "CHAR_STRETCH", 1)
 
 end
 
@@ -708,13 +743,13 @@ end
 function admin_godmode()
     godmode = not godmode
     local ped = GetPlayerPed(-1)
-    
+
     if godmode then -- activé
           SetEntityInvincible(ped, true)
-    ESX.ShowAdvancedNotification("Administration", "", "Invincibilité : ~g~activé", "CHAR_STRETCH", 1) 
+    ESX.ShowAdvancedNotification("Administration", "", "Invincibilité : ~g~activé", "CHAR_STRETCH", 1)
       else
           SetEntityInvincible(ped, false)
-    ESX.ShowAdvancedNotification("Administration", "", "Invincibilité : ~r~désactivé", "CHAR_STRETCH", 1) 
+    ESX.ShowAdvancedNotification("Administration", "", "Invincibilité : ~r~désactivé", "CHAR_STRETCH", 1)
     end
   end
   local invincible = false
@@ -724,7 +759,7 @@ function admin_godmode()
 
 	if plyId ~= nil then
 		plyId = tonumber(plyId)
-		
+
 		if type(plyId) == 'number' then
 			local targetPlyCoords = GetEntityCoords(GetPlayerPed(GetPlayerFromServerId(plyId)))
 			SetEntityCoords(plyPed, targetPlyCoords)
@@ -737,7 +772,7 @@ function admin_tp_playertome()
 
 	if plyId ~= nil then
 		plyId = tonumber(plyId)
-		
+
 		if type(plyId) == 'number' then
 			local plyPedCoords = GetEntityCoords(plyPed)
 			print(plyId)
@@ -753,12 +788,12 @@ Citizen.CreateThread(function()
 		if service then
 
 
-    
+
             if ShowName then
                 local pCoords = GetEntityCoords(GetPlayerPed(-1), false)
                 for _, v in pairs(GetActivePlayers()) do
                     local otherPed = GetPlayerPed(v)
-                
+
                     if otherPed ~= pPed then
                         if #(pCoords - GetEntityCoords(otherPed, false)) < 250.0 then
                             gamerTags[v] = CreateFakeMpGamerTag(otherPed, ('[%s] %s'):format(GetPlayerServerId(v), GetPlayerName(v)), false, false, '', 0)
@@ -787,7 +822,7 @@ Citizen.CreateThread(function()
                 local pCoords = GetEntityCoords(GetPlayerPed(-1), false)
                 for _, v in pairs(GetActivePlayers()) do
                     local otherPed = GetPlayerPed(v)
-                
+
                     if otherPed ~= pPed then
                         if #(pCoords - GetEntityCoords(otherPed, false)) < 250.0 then
                             gamerTags[v] = CreateFakeMpGamerTag(otherPed, ('[%s] %s'):format(GetPlayerServerId(v), GetPlayerName(v)), false, false, '', 0)
@@ -819,7 +854,7 @@ end)
 
   --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  
+
   Citizen.CreateThread(function()
     while true do
       Citizen.Wait(0)
@@ -828,22 +863,22 @@ end)
         local x,y,z = getPosition()
         local dx,dy,dz = getCamDirection()
         local speed = noclip_speed
-  
+
         SetEntityVelocity(ped, 0.0001, 0.0001, 0.0001)
-  
-        if IsControlPressed(0,32) then 
+
+        if IsControlPressed(0,32) then
           x = x+speed*dx
           y = y+speed*dy
           z = z+speed*dz
         end
-  
-  
-        if IsControlPressed(0,269) then 
+
+
+        if IsControlPressed(0,269) then
           x = x-speed*dx
           y = y-speed*dy
           z = z-speed*dz
         end
-  
+
         SetEntityCoordsNoOffset(ped,x,y,z,true,true,true)
       end
     end
@@ -860,27 +895,27 @@ Citizen.CreateThread(function()
                     RageUI.Checkbox("¦  Mode Modération",nil, service,{},function(Hovered,Ative,Selected,Checked)
                     RageUI.Separator("")
                         if (Selected) then
-        
+
                             service = Checked
-        
-        
+
+
                             if Checked then
                                 onservice = true
                                 local head = RegisterPedheadshot(PlayerPedId())
                                 while not IsPedheadshotReady(head) or not IsPedheadshotValid(head) do
                                     Wait(1)
                                 end
-                                headshot = GetPedheadshotTxdString(head)     
-                                
+                                headshot = GetPedheadshotTxdString(head)
+
                             else
                                 onservice = false
                                 ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin)
                                 TriggerEvent('skinchanger:loadSkin', skin)
-                                end)       
+                                end)
                             end
                         end
                     end)
-        
+
                     if onservice then
 
 ---------------------------------------------------------------- Check Box Activé - Menu Home ----------------------------------------------------------------
@@ -900,13 +935,13 @@ RageUI.Separator("")
 
                         RageUI.Button("~o~→~s~ Panel Véhicule", nil, {RightLabel = CouleurRandom.."→→~s~"},true, function()
                         end, RMenu:Get('MenuAdmininspecteur', 'main4'))
-                      
+
                         RageUI.Button("∑→~r~ Panel Annonces/Important", nil, {RightLabel = CouleurRandom.."→→~s~"},true, function()
                         end, RMenu:Get('MenuAdmininspecteur', 'staff'))
 
 
 
-                                                          
+
 
                     end
 
@@ -941,21 +976,21 @@ RageUI.IsVisible(RMenu:Get('menu', 'options'), true, true, true, function()
                     ESX.ShowNotification("Vous avez setjob : ~g~"..job.. " " .. grade .. " ~b~" .. GetPlayerName(GetPlayerFromServerId(IdSelected)))
                 else
                     ESX.ShowNotification("~r~Champ invalide, veuillez réessayer.")
-                    RageUI.CloseAll()	
-                end	
+                    RageUI.CloseAll()
+                end
             end
         end)
     end
 
-	RageUI.Checkbox("→~s~ ~b~Freeze le Joueur", description, Frigo,{},function(Hovered,Ative,Selected,Checked)
+    RageUI.Checkbox("→~s~Freeze / Defreeze", description, Frigo,{},function(Hovered,Ative,Selected,Checked)
         if Selected then
             Frigo = Checked
             if Checked then
-                ESX.ShowNotification("Le Joueur à ~b~bien été Freeze~s~ ("..GetPlayerName(GetPlayerFromServerId(IdSelected))..")")
-                TriggerEvent("admin:Freeze", IdSelected)
+                ESX.ShowNotification("~r~Joueur Freeze ("..GetPlayerName(GetPlayerFromServerId(IdSelected))..")")
+                ExecuteCommand("freeze "..IdSelected)
             else
-                ESX.ShowNotification("Le joueur à ~b~bien été Unfreeze~s~ ("..GetPlayerName(GetPlayerFromServerId(IdSelected))..")")
-                TriggerEvent("admin:Freeze", IdSelected)
+                ESX.ShowNotification("~g~Joueur Defreeze ("..GetPlayerName(GetPlayerFromServerId(IdSelected))..")")
+                ExecuteCommand("freeze "..IdSelected)
             end
         end
     end)
@@ -963,14 +998,14 @@ RageUI.IsVisible(RMenu:Get('menu', 'options'), true, true, true, function()
     RageUI.Button("→~s~ ~o~Se téléporter au Joueur", nil, {}, true, function(Hovered, Active, Selected)
         if (Selected) then
             SetEntityCoords(PlayerPedId(), GetEntityCoords(GetPlayerPed(GetPlayerFromServerId(IdSelected))))
-            ESX.ShowAdvancedNotification("Administration", "", '~b~Vous venez de vous téléporter à~s~ '.. GetPlayerName(GetPlayerFromServerId(IdSelected)) ..'', "CHAR_STRETCH", 1) 
+            ESX.ShowAdvancedNotification("Administration", "", '~b~Vous venez de vous téléporter à~s~ '.. GetPlayerName(GetPlayerFromServerId(IdSelected)) ..'', "CHAR_STRETCH", 1)
 
         end
     end)
     RageUI.Button("→~s~ ~o~Téléporter le Joueur à vous", nil, {}, true, function(Hovered, Active, Selected, target)
         if (Selected) then
             ExecuteCommand("bring "..IdSelected)
-            ESX.ShowAdvancedNotification("Administration", "", '~b~Vous venez de téléporter ~s~ '.. GetPlayerName(GetPlayerFromServerId(IdSelected)) ..' ~b~à vous~s~ !', "CHAR_STRETCH", 1) 
+            ESX.ShowAdvancedNotification("Administration", "", '~b~Vous venez de téléporter ~s~ '.. GetPlayerName(GetPlayerFromServerId(IdSelected)) ..' ~b~à vous~s~ !', "CHAR_STRETCH", 1)
         end
     end)
 
@@ -984,7 +1019,7 @@ RageUI.IsVisible(RMenu:Get('menu', 'options'), true, true, true, function()
     RageUI.Button("→~s~ ~g~Heal le Joueur", "", {RightLabel = nilt}, true, function(Hovered, Active, Selected)
         if (Selected) then
             ExecuteCommand("heal "..IdSelected)
-            ESX.ShowAdvancedNotification("Administration", "", '~g~Heal de '.. GetPlayerName(GetPlayerFromServerId(IdSelected)) ..' ~g~effectué~s~ !', "CHAR_STRETCH", 1) 
+            ESX.ShowAdvancedNotification("Administration", "", '~g~Heal de '.. GetPlayerName(GetPlayerFromServerId(IdSelected)) ..' ~g~effectué~s~ !', "CHAR_STRETCH", 1)
         end
     end)
 
@@ -1007,7 +1042,7 @@ RageUI.IsVisible(RMenu:Get('menu', 'options'), true, true, true, function()
         RageUI.Button("→~s~ ~r~Wipe l'inventaire du Joueur", "", {RightLabel = nil}, true, function(Hovered, Active, Selected)
             if (Selected) then
                 ExecuteCommand("clearinventory "..IdSelected)
-            ESX.ShowAdvancedNotification("Administration", "", "Vous venez de WIPE les items de ~b~".. GetPlayerName(GetPlayerFromServerId(IdSelected)) .."~s~ !", "CHAR_STRETCH", 1) 																
+            ESX.ShowAdvancedNotification("Administration", "", "Vous venez de WIPE les items de ~b~".. GetPlayerName(GetPlayerFromServerId(IdSelected)) .."~s~ !", "CHAR_STRETCH", 1)
             end
         end)
     end
@@ -1015,7 +1050,7 @@ RageUI.IsVisible(RMenu:Get('menu', 'options'), true, true, true, function()
         RageUI.Button("→~s~ ~r~Wipe les Armes du Joueur", "", {RightLabel = nil}, true, function(Hovered, Active, Selected)
             if (Selected) then
                 ExecuteCommand("clearloadout "..IdSelected)
-            ESX.ShowAdvancedNotification("Administration", "", "Vous venez de WIPE les armes de ~b~".. GetPlayerName(GetPlayerFromServerId(IdSelected)) .."~s~ !", "CHAR_STRETCH", 1) 								
+            ESX.ShowAdvancedNotification("Administration", "", "Vous venez de WIPE les armes de ~b~".. GetPlayerName(GetPlayerFromServerId(IdSelected)) .."~s~ !", "CHAR_STRETCH", 1)
             end
         end)
     end
@@ -1025,11 +1060,11 @@ RageUI.IsVisible(RMenu:Get('menu', 'options'), true, true, true, function()
             local amount = KeyboardInput("Nombre", "", 10)
             if item and amount then
                 ExecuteCommand("giveitem "..IdSelected.. " " ..item.. " " ..amount)
-                ESX.ShowNotification("Vous venez de donner ~g~"..amount.. " " .. item .. " ~w~à " .. GetPlayerName(GetPlayerFromServerId(IdSelected)))	
+                ESX.ShowNotification("Vous venez de donner ~g~"..amount.. " " .. item .. " ~w~à " .. GetPlayerName(GetPlayerFromServerId(IdSelected)))
             else
                     ESX.ShowNotification("~r~Champ incorrect !")
-                RageUI.CloseAll()	
-            end			
+                RageUI.CloseAll()
+            end
         end
     end)
     if superadmin then
@@ -1042,7 +1077,7 @@ RageUI.IsVisible(RMenu:Get('menu', 'options'), true, true, true, function()
                     ESX.ShowNotification("Vous venez de donner ~g~"..weapon.. " avec " .. ammo .. " munitions ~w~à " .. GetPlayerName(GetPlayerFromServerId(IdSelected)))
                 else
                     ESX.ShowNotification("~r~Champ incorrect !")
-                    RageUI.CloseAll()	
+                    RageUI.CloseAll()
                 end
             end
         end)
@@ -1064,7 +1099,7 @@ RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'staff'), true, true, true, fu
                 local id = KeyboardInput("Message d'annonce ", "", 100)
                 ExecuteCommand("announce "..id.." Envoyé par : "..name.." ")
 
-            end 
+            end
         end)
 
         RageUI.Button(CouleurRandom.."→~s~ ~p~Setjob un Joueur ", nil, {RightLabel = nil}, true, function(Hovered, Active, Selected)
@@ -1077,8 +1112,8 @@ RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'staff'), true, true, true, fu
                     ESX.ShowNotification("Vous avez setjob : ~g~"..job.. " " .. grade .. " ~b~" .. GetPlayerName(GetPlayerFromServerId(IdSelected)))
                 else
                     ESX.ShowNotification("~r~Champ invalide, veuillez réessayer.")
-                    RageUI.CloseAll()	
-                end	
+                    RageUI.CloseAll()
+                end
             end
         end)
 
@@ -1090,7 +1125,7 @@ RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'staff'), true, true, true, fu
                 local raison = KeyboardInput("Raison du kick ", "", 120)
                 ExecuteCommand("kick "..id.." "..raison.." ")
 
-            end 
+            end
         end)
 
         RageUI.Button(CouleurRandom.."→~s~ Bannir un joueur (ID)", nil, {RightLabel = nil}, true, function(Hovered, Active, Selected)
@@ -1100,16 +1135,16 @@ RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'staff'), true, true, true, fu
                 local raison = KeyboardInput("Raison du ban ", "", 120)
                 ExecuteCommand("sqlban "..id.." "..time.." "..raison.." ")
 
-            end 
+            end
         end)
 
         RageUI.Button(CouleurRandom.."→~s~ Débannir un joueur (Steam)", nil, {RightLabel = nil}, true, function(Hovered, Active, Selected)
             if (Selected) then
-                local steam = KeyboardInput("Steam du joueurs à déban ", "", 4)
+                local steam = KeyboardInput("Steam du joueurs à déban ", "", 30)
 
                 ExecuteCommand("sqlunban "..steam.." ")
 
-            end 
+            end
         end)
 
 
@@ -1122,15 +1157,15 @@ RageUI.Separator("~p~Changement Tenue")
          aTenue()
          ESX.ShowNotification("Tenue admin activé pour : ~g~"..name)
          ESX.ShowNotification("Pour désactiver la tenue, stoppé la modération.")
-      end 
+      end
     end)
 
     RageUI.Button(CouleurRandom.."→~s~ Enlevé la tenue Admin ", nil, {RightLabel = nil}, true, function(Hovered, Active, Selected)
         if (Selected) then
             ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin)
                 TriggerEvent('skinchanger:loadSkin', skin)
-                end)  
-      end 
+                end)
+      end
     end)
 
     RageUI.Button(CouleurRandom.."→~s~ Changer la couleur de son véhicule ", nil, {RightLabel = nil}, true, function(Hovered, Active, Selected)
@@ -1139,7 +1174,7 @@ RageUI.Separator("~p~Changement Tenue")
             local ped = PlayerPedId()
             local vehicle = GetVehiclePedIsIn( ped, false )
             SetVehicleColours(vehicle, r, g, b)
-      end 
+      end
     end)
 
     end
@@ -1149,7 +1184,7 @@ end)
 
 
 
-RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'main6'), true, true, true, function() 
+RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'main6'), true, true, true, function()
 
     RageUI.Button(CouleurRandom.."→~s~ Utiliser le NoClip", "Activer/Désactiver le NoClip", {RightLabel = CouleurRandom.."F9"},true, function()
     end, RMenu:Get('menu', 'gestion'))
@@ -1158,10 +1193,10 @@ RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'main6'), true, true, true, fu
     end, RMenu:Get('menu', 'gestion'))
 
     RageUI.Button(CouleurRandom.."→~s~ Se téléporter sur le Marqueur", "Se téléporter sur le marqueur (sur la minimap)", {RightLabel = CouleurRandom.."ALT"},true, function()
-    end, RMenu:Get('menu', 'gestion'))     
+    end, RMenu:Get('menu', 'gestion'))
 
     RageUI.Button(CouleurRandom.."→~s~ Être BG", "Tuto être BG", {RightLabel = CouleurRandom.."Être BG"},true, function()
-    end, RMenu:Get('menu', 'gestion'))   
+    end, RMenu:Get('menu', 'gestion'))
 
 end, function()
 end)
@@ -1196,7 +1231,7 @@ RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'main7'), true, true, true, fu
                         while affichagecoords do
                             Wait(0)
                             local x,y,z = table.unpack(GetEntityCoords(GetPlayerPed(-1)))
-                            local h = GetEntityHeading(GetPlayerPed(-1)) 
+                            local h = GetEntityHeading(GetPlayerPed(-1))
                             local r = GetEntityRotation(GetPlayerPed(-1))
                         --    DrawText3D(x+0.1,y,z+0.5,"~r~Coords:  ~w~"..x.." ~o~| ~w~" ..y.. " ~o~| ~w~"..z.. " ~o~| ~w~"..h, 0.4)
                             print("Coordonnées:  ^1X: "..x.." | ^3Y: " ..y.. " | ^4Z: "..z.. " | ^7H: "..h)
@@ -1227,7 +1262,7 @@ end)
                         RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'main3'), true, true, true, function()
 
                             RageUI.Separator(CouleurRandom.."- Actions Personelles -")
-        
+
                             RageUI.Button(CouleurRandom.."→~s~ Vos Informations", "Consultez vos informations personnelles.", {RightLabel = CouleurRandom.."→→~s~"},true, function()
                             end, RMenu:Get('MenuAdmininspecteur', 'infos'))
 
@@ -1285,12 +1320,12 @@ end)
                             RageUI.Button(CouleurRandom.."→~s~ Give d'Armes", "Se donner des armes.", {RightBadge = RageUI.BadgeStyle.Gun},true, function()
                             end, RMenu:Get('MenuAdmininspecteur', 'main5'))
 
-                            
+
                             RageUI.Button(CouleurRandom.."→~s~ Changer d'Apparence", "Changer votre personnage.", {RightBadge = RageUI.BadgeStyle.Clothes},true, function()
                             end, RMenu:Get('MenuAdmininspecteur', 'apparence'))
 
                             RageUI.List('~b~→~s~ Give', Menu.action, Menu.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                                if (Selected) then 
+                                if (Selected) then
                                     if Index == 1 then
                                         GiveCash()
                                 elseif Index == 2 then
@@ -1299,23 +1334,23 @@ end)
                                     GiveND()
                                 end
                             end
-                               Menu.list = Index;              
+                               Menu.list = Index;
                             end)
 
 
-                            
+
 
 
                         end, function()
                         end)
-                        
+
                         RageUI.IsVisible(RMenu:Get('MenuAdmininspecteur', 'infos'), true, true, true, function()
 
 
                             TriggerEvent("updateStatus",VM.Faim,VM.Soif)
                             RageUI.SliderProgress(CouleurRandom.."→~s~ Votre barre de Faim ", VM.Faim, 100, nil, {ProgressColor = {R = 254, G = 143, B = 0, A = 200},ProgressBackgroundColor = {R = 255, G = 255, B = 255, A = 200} }, true, function(Hovered, Active, Selected, Index)
                             end)
-        
+
                             RageUI.SliderProgress(CouleurRandom.."→~s~ Votre barre de Soif :", VM.Soif, 100, nil, {ProgressColor = {R = 0, G = 119, B = 254, A = 200},ProgressBackgroundColor = {R = 255, G = 255, B = 255, A = 200} }, true, function(Hovered, Active, Selected, Index)
                             end)
 
@@ -1330,14 +1365,14 @@ end)
                         end, function()
                         end)
 
-------------------------------------------------------------- STAFF ONLY -------------------------------------------------------------    
+------------------------------------------------------------- STAFF ONLY -------------------------------------------------------------
 ---------------------------------------------------------------- PEDS ----------------------------------------------------------------
 
 RageUI.IsVisible(RMenu:Get('ped', 'main'), true, true, true, function()
 
 
     RageUI.List('Métier (Homme)', Menu9.action, Menu9.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-        if (Selected) then 
+        if (Selected) then
             if Index == 1 then
                 local j1 = PlayerId()
                 local p1 = GetHashKey('s_m_y_cop_01')
@@ -1418,19 +1453,19 @@ RageUI.IsVisible(RMenu:Get('ped', 'main'), true, true, true, function()
                                                         SetPlayerModel(j1, p1)
                                                         SetModelAsNoLongerNeeded(p1)
                                                         ESX.ShowNotification('✅ Changement en PED Effectué Avec Succès !')
-                    
+
 
 
                 end
             end
-               Menu9.list = Index;              
+               Menu9.list = Index;
             end)
 
 
 
 
             RageUI.List('Métier (Femme)', Menu10.action, Menu10.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                if (Selected) then 
+                if (Selected) then
                     if Index == 1 then
                         local j1 = PlayerId()
                         local p1 = GetHashKey('s_f_y_cop_01')
@@ -1475,14 +1510,14 @@ RageUI.IsVisible(RMenu:Get('ped', 'main'), true, true, true, function()
 
                                 end
                             end
-                               Menu10.list = Index;              
+                               Menu10.list = Index;
                             end)
 
 
 
 
                             RageUI.List('Gang (Homme)', Menu11.action, Menu11.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                                if (Selected) then 
+                                if (Selected) then
                                     if Index == 1 then
                                         local j1 = PlayerId()
                                         local p1 = GetHashKey('g_m_y_ballaorig_01')
@@ -1657,13 +1692,13 @@ RageUI.IsVisible(RMenu:Get('ped', 'main'), true, true, true, function()
 
                         end
                     end
-                       Menu11.list = Index;              
+                       Menu11.list = Index;
                     end)
 
 
 
                     RageUI.List('Gang (Femme)', Menu12.action, Menu12.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                        if (Selected) then 
+                        if (Selected) then
                             if Index == 1 then
                                 local j1 = PlayerId()
                                 local p1 = GetHashKey('g_f_y_ballas_01')
@@ -1707,11 +1742,11 @@ RageUI.IsVisible(RMenu:Get('ped', 'main'), true, true, true, function()
 
                 end
             end
-               Menu12.list = Index;              
+               Menu12.list = Index;
             end)
 
             RageUI.List('Animaux', Menu8.action, Menu8.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                if (Selected) then 
+                if (Selected) then
                     if Index == 1 then
                         local j1 = PlayerId()
                         local p1 = GetHashKey('a_c_chimp')
@@ -1782,15 +1817,15 @@ RageUI.IsVisible(RMenu:Get('ped', 'main'), true, true, true, function()
                                                 SetPlayerModel(j1, p1)
                                                 SetModelAsNoLongerNeeded(p1)
                                                 ESX.ShowNotification('✅ Changement en PED Effectué Avec Succès !')
-        
+
                 end
             end
-               Menu8.list = Index;              
+               Menu8.list = Index;
             end)
 
 
             RageUI.List('Personnage', Menu13.action, Menu13.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                if (Selected) then 
+                if (Selected) then
                     if Index == 1 then
                         local j1 = PlayerId()
                         local p1 = GetHashKey('player_one')
@@ -1846,7 +1881,7 @@ RageUI.IsVisible(RMenu:Get('ped', 'main'), true, true, true, function()
 
         end
     end
-       Menu13.list = Index;              
+       Menu13.list = Index;
     end)
 
     RageUI.Separator("↓                        ↓")
@@ -1854,7 +1889,7 @@ RageUI.IsVisible(RMenu:Get('ped', 'main'), true, true, true, function()
 
 
     RageUI.Button("~g~                            Revenir à la Normal", "", {RightLabel = ""}, true, function(Hovered, Active, Selected)
-        if (Selected) then   
+        if (Selected) then
         ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin, jobSkin)
             local isMale = skin.sex == 0
 
@@ -1888,7 +1923,7 @@ end)
 
 
                             RageUI.List(CouleurRandom..'→~s~ Armes de Mêlée', Menu6.action, Menu6.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                                if (Selected) then 
+                                if (Selected) then
                                     if Index == 1 then
                                         TriggerServerEvent('inspecteur:knife')
                                     elseif Index == 2 then
@@ -1921,12 +1956,12 @@ end)
                                     TriggerServerEvent('inspecteur:poolcue')
                             end
                         end
-                               Menu6.list = Index;              
+                               Menu6.list = Index;
                             end)
 
 
                             RageUI.List(CouleurRandom..'→~s~ Pistolets', Menu3.action, Menu3.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                                if (Selected) then 
+                                if (Selected) then
                                     if Index == 1 then
                                         TriggerServerEvent('inspecteur:pistol')
                                     elseif Index == 2 then
@@ -1945,12 +1980,12 @@ end)
                                     TriggerServerEvent('inspecteur:snspistol')
                                 end
                             end
-                               Menu3.list = Index;              
+                               Menu3.list = Index;
                             end)
 
-                            
+
                             RageUI.List(CouleurRandom..'→~s~ Mitraillettes', Menu2.action, Menu2.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                                if (Selected) then 
+                                if (Selected) then
                                     if Index == 1 then
                                         TriggerServerEvent('inspecteur:smg')
                                     elseif Index == 2 then
@@ -1965,13 +2000,13 @@ end)
                                     TriggerServerEvent('inspecteur:gusenberg')
                                 end
                             end
-                               Menu2.list = Index;              
+                               Menu2.list = Index;
                             end)
 
 
 
                             RageUI.List(CouleurRandom..'→~s~ Fusils d\'Assaults', Menu4.action, Menu4.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                                if (Selected) then 
+                                if (Selected) then
                                     if Index == 1 then
                                         TriggerServerEvent('inspecteur:assaultrifle')
                                     elseif Index == 2 then
@@ -1986,13 +2021,13 @@ end)
                                     TriggerServerEvent('inspecteur:compactrifle')
                             end
                         end
-                               Menu4.list = Index;              
+                               Menu4.list = Index;
                             end)
 
 
-                            
+
                             RageUI.List(CouleurRandom..'→~s~ Fusils à Pompe', Menu5.action, Menu5.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                                if (Selected) then 
+                                if (Selected) then
                                     if Index == 1 then
                                         TriggerServerEvent('inspecteur:pumpshotgun')
                                     elseif Index == 2 then
@@ -2011,12 +2046,12 @@ end)
                                     TriggerServerEvent('inspecteur:autoshotgun')
                             end
                         end
-                               Menu5.list = Index;              
+                               Menu5.list = Index;
                             end)
 
 
                             RageUI.List(CouleurRandom..'→~s~ Fusils de Sniper', Menu7.action, Menu7.list, nil, {RightLabel = ""}, true, function(Hovered, Active, Selected, Index)
-                                if (Selected) then 
+                                if (Selected) then
                                     if Index == 1 then
                                         TriggerServerEvent('inspecteur:sniperrifle')
                                     elseif Index == 2 then
@@ -2025,7 +2060,7 @@ end)
                                     TriggerServerEvent('inspecteur:marksmanrifle')
                             end
                         end
-                               Menu7.list = Index;              
+                               Menu7.list = Index;
                             end)
 
                             RageUI.Separator("~r~DANGER ")
@@ -2037,7 +2072,7 @@ end)
                                 TriggerServerEvent('inspecteur:weapon')
                                 end
                             end)
-                        
+
                             RageUI.Button(CouleurRandom.."→~s~ Supprimer toutes les armes", "", {RightLabel = ""}, true, function(Hovered, Active, Selected)
                                 if (Selected) then
                                     RemoveAllPedWeapons(GetPlayerPed(-1), true)
@@ -2056,7 +2091,7 @@ end)
                                             RageUI.Separator(CouleurRandom.."- Actions sur véhicules -")
 
 
-                                            RageUI.Button(CouleurRandom.."→~s~ Réparer le Véhicule", "Réparer le véhicule dans lequel vous êtes.", {RightBadge = RageUI.BadgeStyle.Heart}, true, function(Hovered, Active, Selected)                                                                                                                   
+                                            RageUI.Button(CouleurRandom.."→~s~ Réparer le Véhicule", "Réparer le véhicule dans lequel vous êtes.", {RightBadge = RageUI.BadgeStyle.Heart}, true, function(Hovered, Active, Selected)
                                                 if Selected then
                                                             if IsPedInAnyVehicle(GetPlayerPed(-1), false) then
                                                             vehicle = GetVehiclePedIsIn(GetPlayerPed(-1), false)
@@ -2072,9 +2107,9 @@ end)
                                                 if (Selected) then
                                                     admin_vehicle_flip()
                                                 end
-                                            end)   
+                                            end)
                                             RageUI.Button(CouleurRandom.."→~s~ Spawn un Véhicule", "Faire apparaitre un véhicule.", {RightBadge = RageUI.BadgeStyle.Car}, true, function(_, _, Selected)
-                                                if Selected then                                                                
+                                                if Selected then
                                                    local ped = GetPlayerPed(tgt)
                                                    local ModelName = KeyboardInput("Véhicule", "", 100)
                                                  if ModelName and IsModelValid(ModelName) and IsModelAVehicle(ModelName) then
@@ -2114,7 +2149,7 @@ end)
                                             end)
 
 
-                                   
+
                                         end, function()
                                         end)
 
@@ -2138,10 +2173,10 @@ end)
                         end
                         end)
 
-                        
 
 
-            
+
+
 ---------------------------------------------------------------- Menu réservé aux SuperAdmin ----------------------------------------------------------------
 
 Citizen.CreateThread(function()
@@ -2157,7 +2192,7 @@ Citizen.CreateThread(function()
                         superadmin = false
                     end
                 end)
-            end 
+            end
         end
     end)
 
@@ -2175,7 +2210,7 @@ Citizen.CreateThread(function()
                                 superadmin = false
                             end
                         end)
-                    end 
+                    end
                 end
             end)
 
@@ -2194,7 +2229,7 @@ Citizen.CreateThread(function()
                                     superadmin = false
                                 end
                             end)
-                        end 
+                        end
                     end
                 end)
 
@@ -2207,20 +2242,18 @@ Citizen.CreateThread(function()
                                     playergroup = group
                                     if playergroup == 'superadmin' then
                                         superadmin = true
-                                        TriggerEvent("esx:deleteVehicle")    
+                                        TriggerEvent("esx:deleteVehicle")
                                     else
                                         superadmin = false
                                     end
                                 end)
-                            end 
+                            end
                         end
                     end)
 
                     Citizen.CreateThread(function()
-                        while true do 
+                        while true do
                            Citizen.Wait(400)
-                           if CouleurRandom == "~r~" then CouleurRandom = "~s~" else CouleurRandom = "~r~" end 
-                       end 
+                           if CouleurRandom == "~r~" then CouleurRandom = "~s~" else CouleurRandom = "~r~" end
+                       end
                     end)
-
-                    
